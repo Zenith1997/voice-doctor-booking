@@ -39,7 +39,7 @@ app.post("/api/voice-command", async (req, res) => {
     }
 
     const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-5.4-mini",
       input: [
         {
           role: "system",
