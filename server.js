@@ -1,114 +1,49 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import OpenAI from "openai";
+const express = require("express");
+const dotenv = require("dotenv");
+const path = require("path");
+const fs = require("fs");
+const { DatabaseSync } = require("node:sqlite");
+const OpenAI = require("openai");
 
-// Load OPENAI_API_KEY from .env
-// Never expose this key in browser-side JavaScript.
+const createTables = require("./models/create");
+const seedDatabase = require("./seed");
+
+const authRoutes = require("./routes/authRoutes");
+const doctorRoutes = require("./routes/doctorRoutes");
+const availabilityRoutes = require("./routes/availabilityRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const voiceRoutes = require("./routes/voiceRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const dbDir = path.join(__dirname, "db");
 
-app.use(cors());
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const db = new DatabaseSync(path.join(dbDir, "app.db"));
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 
-const doctors = [
-  { id: "sarah-nguyen", name: "Dr Sarah Nguyen", specialty: "Cardiology", location: "Geelong Central", next: "Tomorrow 10:00 AM" },
-  { id: "james-patel", name: "Dr James Patel", specialty: "General Practice", location: "Waurn Ponds", next: "Today 4:30 PM" },
-  { id: "emily-chen", name: "Dr Emily Chen", specialty: "Dentistry", location: "Belmont", next: "Monday 2:00 PM" },
-  { id: "michael-brown", name: "Dr Michael Brown", specialty: "Physiotherapy", location: "Highton", next: "Wednesday 11:30 AM" }
-];
+createTables(db);
+seedDatabase(db);
 
-app.get("/api/doctors", (_req, res) => {
-  res.json({ doctors });
-});
-
-app.post("/api/voice-command", async (req, res) => {
-  try {
-    const { transcript } = req.body;
-
-    if (!transcript || typeof transcript !== "string") {
-      return res.status(400).json({ error: "transcript is required" });
-    }
-
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: "Missing OPENAI_API_KEY in .env" });
-    }
-
-    const response = await openai.responses.create({
-      model: "gpt-5.4-mini",
-      input: [
-        {
-          role: "system",
-          content: `You control a doctor appointment booking UI. Convert the user voice transcript into JSON only.
-
-Available doctors:
-${JSON.stringify(doctors, null, 2)}
-
-Return exactly this JSON shape:
-{
-  "intent": "book_form" | "submit_booking" | "show_doctors" | "clear_form" | "unknown",
-  "doctorId": string | null,
-  "specialty": string | null,
-  "date": string | null,
-  "time": string | null,
-  "patientName": string | null,
-  "reason": string | null,
-  "message": string
-}
-
-Rules:
-- Choose the closest doctor by doctor name or specialty.
-- Do not invent medical advice.
-- If the user says book/confirm/submit without enough details, use submit_booking and leave missing fields null.
-- If unclear, use unknown and a helpful message.`
-        },
-        { role: "user", content: transcript }
-      ],
-      text: {
-        format: {
-          type: "json_object"
-        }
-      }
-    });
-
-    const parsed = JSON.parse(response.output_text);
-    res.json(parsed);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Could not process voice command" });
-  }
-});
-
-app.post("/api/bookings", (req, res) => {
-  const { doctorId, patientName, date, time, reason } = req.body;
-
-  if (!doctorId || !patientName || !date || !time) {
-    return res.status(400).json({
-      error: "Please select a doctor and enter patient name, date, and time."
-    });
-  }
-
-  const doctor = doctors.find((d) => d.id === doctorId);
-  if (!doctor) return res.status(404).json({ error: "Doctor not found" });
-
-  // Prototype only: replace with a database in a real app.
-  const booking = {
-    id: `BK-${Date.now()}`,
-    doctor,
-    patientName,
-    date,
-    time,
-    reason: reason || "General consultation",
-    status: "Confirmed"
-  };
-
-  res.json({ booking });
-});
+app.use("/api", authRoutes(db));
+app.use("/api", doctorRoutes(db));
+app.use("/api", availabilityRoutes(db));
+app.use("/api", appointmentRoutes(db));
+app.use("/api", voiceRoutes(db, openai));
+app.use("/api/admin", adminRoutes(db));
 
 app.listen(port, () => {
-  console.log(`Voice doctor booking app running at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });
