@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,74 +7,51 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-
-  <nav class="navbar  navbar-expand-lg navbar-dark bg-primary sticky-top">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="#">VoiceCare</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <a class="navbar-brand fw-bold" href="/">VoiceCare</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-label="Toggle navigation" title="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="#doctors">Doctors</a></li>
           <li class="nav-item"><a class="nav-link" href="#booking">Book</a></li>
-          <li class="nav-item"><a class="nav-link" href="#voice">Voice</a></li>
+          <li class="nav-item"><a class="nav-link" href="/doctor-panel.html">Doctor Panel</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Panel</a></li>
         </ul>
       </div>
-      <div class="mt-2">add this</div>
     </div>
-
   </nav>
-   
-      <!-- Floating Voice Chatbot -->
-<div id="voiceChatbot" class="voice-chatbot collapsed">
 
-  <!-- Chat window -->
-  <div id="chatWindow" class="chat-window shadow-lg">
-    <div class="chat-header">
-      <div>
-        <strong>🎙 VoiceCare Assistant</strong>
-        <div class="small">Book appointments by voice or chat</div>
-      </div>
-
-      <button id="closeChatBtn" class="btn-close btn-close-white"></button>
-    </div>
-
-    <div class="chat-body">
-      <div class="bot-message">
-        Hi, I can help you book a doctor appointment. Try saying:
-        <br>
-        <strong>“Book Dr Sarah tomorrow at 10 AM.”</strong>
-      </div>
-
-      <div class="chat-section mt-3">
-        <div class="small text-muted mb-1">Transcript</div>
-        <div id="transcript" class="transcript-box">
-          No voice command yet.
+  <div id="voiceChatbot" class="voice-chatbot collapsed">
+    <div id="chatWindow" class="chat-window shadow-lg">
+      <div class="chat-header">
+        <div>
+          <strong>VoiceCare Assistant</strong>
+          <div class="small">Book appointments by voice or chat</div>
         </div>
+        <button id="closeChatBtn" class="btn-close btn-close-white" aria-label="Close assistant"></button>
       </div>
-
-      <div id="assistantMessage" class="assistant-message mt-3">
-        Voice assistant is ready.
+      <div class="chat-body">
+        <div class="bot-message">
+          Try saying: <strong>"Book Dr Sarah tomorrow at 10 AM."</strong>
+        </div>
+        <div class="chat-section mt-3">
+          <div class="small text-muted mb-1">Transcript</div>
+          <div id="transcript" class="transcript-box">No voice command yet.</div>
+        </div>
+        <div id="assistantMessage" class="assistant-message mt-3">Voice assistant is ready.</div>
+      </div>
+      <div class="chat-footer">
+        <button id="voiceBtn" class="btn btn-primary w-100" aria-label="Start voice booking">
+          Start listening
+        </button>
       </div>
     </div>
-
-    <div class="chat-footer">
-      <button id="voiceBtn" class="btn btn-primary w-100">
-        🎙 Start listening
-      </button>
-    </div>
+    <button id="openChatBtn" class="chat-float-btn" aria-label="Open voice booking assistant">🎙</button>
   </div>
-
-  <!-- Floating button -->
-  <button id="openChatBtn" class="chat-float-btn">
-    🎙
-  </button>
-
-</div>
-
 
   <header class="hero py-5">
     <div class="container py-4">
@@ -83,19 +59,19 @@
         <div class="col-lg-7">
           <span class="badge text-bg-light mb-3">Voice + Click Booking</span>
           <h1 class="display-5 fw-bold">Book doctors by speaking or clicking.</h1>
-          <p class="lead mt-3">Say things like “Book Dr Sarah Nguyen tomorrow at 10 AM” and the form fills
-            automatically. You can also use normal buttons and form fields.</p>
+          <p class="lead mt-3">Voice commands are parsed, shown as transcript, and always confirmed before saving.</p>
           <div class="d-flex flex-wrap gap-2 mt-4">
             <a href="#booking" class="btn btn-light btn-lg">Book now</a>
-            <button id="heroVoiceBtn" class="btn btn-outline-light btn-lg">🎙 Start voice booking</button>
+            <a href="#doctors" class="btn btn-outline-light btn-lg">Browse doctors</a>
+            <button id="heroVoiceBtn" class="btn btn-outline-light btn-lg">Start voice booking</button>
           </div>
         </div>
         <div class="col-lg-5">
           <div class="glass-card p-4 shadow-lg">
             <h2 class="h4 fw-bold">Try saying:</h2>
-            <p class="mb-2">“I need a GP appointment today at 4:30 PM.”</p>
-            <p class="mb-2">“Book dentist Monday 2 PM for Zenith.”</p>
-            <p class="mb-0">“Show me doctors.”</p>
+            <p class="mb-2">"I need a GP appointment today at 4:30 PM."</p>
+            <p class="mb-2">"Book dentist Monday 2 PM for Zenith."</p>
+            <p class="mb-0">"Show me doctors."</p>
           </div>
         </div>
       </div>
@@ -103,14 +79,12 @@
   </header>
 
   <main>
-  
-
     <section id="doctors" class="py-5">
       <div class="container">
         <div class="d-flex align-items-end justify-content-between gap-3 mb-4">
           <div>
             <h2 class="fw-bold">Available doctors</h2>
-            <p class="text-muted mb-0">Choose a doctor by specialty, location, or next available time.</p>
+            <p class="text-muted mb-0">Browse and pick a doctor before booking.</p>
           </div>
           <button id="reloadDoctors" class="btn btn-outline-primary">Reload</button>
         </div>
@@ -126,12 +100,16 @@
             <p class="text-muted">Use voice or fill this form manually.</p>
             <form id="bookingForm" class="card border-0 shadow-sm p-4">
               <div class="mb-3">
-                <label class="form-label">Doctor</label>
-                <select id="doctorId" class="form-select" required></select>
+                <label class="form-label" for="doctorId">Doctor</label>
+                <select id="doctorId" class="form-select" aria-label="Doctor selection" title="Doctor selection" required></select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Patient name</label>
                 <input id="patientName" class="form-control" placeholder="Your name" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Patient email (optional)</label>
+                <input id="patientEmail" class="form-control" placeholder="name@example.com">
               </div>
               <div class="row">
                 <div class="col-md-6 mb-3">
@@ -176,12 +154,10 @@
   </main>
 
   <footer class="py-4 bg-dark text-white">
-    <div class="container text-center small">Prototype only. For emergencies, call local emergency services. Do not use
-      this website for urgent medical issues.</div>
+    <div class="container text-center small">Prototype only. For emergencies, call local emergency services.</div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
-
 </html>
