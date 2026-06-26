@@ -1,6 +1,13 @@
 const express = require("express");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
-const { getAllDoctors, createDoctor, updateDoctor, deleteDoctor } = require("../controllers/doctorControllers");
+const {
+  getAllDoctors,
+  createDoctor,
+  updateDoctor,
+  deleteDoctor,
+  reactivateDoctor,
+  deleteDoctorPermanently
+} = require("../controllers/doctorControllers");
 
 function doctorRoutes(db) {
   const router = express.Router();
@@ -8,6 +15,8 @@ function doctorRoutes(db) {
   router.post("/doctors", requireAuth, requireAdmin, createDoctor(db));
   router.put("/doctors/:id", requireAuth, requireAdmin, updateDoctor(db));
   router.delete("/doctors/:id", requireAuth, requireAdmin, deleteDoctor(db));
+  router.put("/doctors/:id/reactivate", requireAuth, requireAdmin, reactivateDoctor(db));
+  router.delete("/doctors/:id/permanent", requireAuth, requireAdmin, deleteDoctorPermanently(db));
   return router;
 }
 

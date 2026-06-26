@@ -23,6 +23,13 @@ const voiceChatbot = document.getElementById("voiceChatbot");
 const openChatBtn = document.getElementById("openChatBtn");
 const closeChatBtn = document.getElementById("closeChatBtn");
 
+const defaultTimeOptions = [
+  "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM",
+  "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM",
+  "05:00 PM"
+];
+
 function getQueryDoctorId() {
   const params = new URLSearchParams(window.location.search);
   const value = params.get("doctorId");
@@ -35,6 +42,7 @@ async function loadDoctors() {
   state.doctors = data.doctors || [];
   renderDoctors();
   loadDoctorOptions();
+  await refreshTimeOptions();
 }
 
 function renderDoctors() {
@@ -86,12 +94,90 @@ function loadDoctorOptions() {
   }
 }
 
+function setTimeSelectOptions(options, selectedValue = "") {
+  if (!timeInput) {
+    return;
+  }
+
+  const uniqueOptions = Array.from(new Set(options.filter(Boolean)));
+  timeInput.innerHTML = `<option value="">Choose time</option>`;
+
+  uniqueOptions.forEach((time) => {
+    const option = document.createElement("option");
+    option.value = time;
+    option.textContent = time;
+    if (selectedValue && selectedValue === time) {
+      option.selected = true;
+    }
+    timeInput.appendChild(option);
+  });
+
+  if (selectedValue && !uniqueOptions.includes(selectedValue)) {
+    const option = document.createElement("option");
+    option.value = selectedValue;
+    option.textContent = `${selectedValue} (from voice)`;
+    option.selected = true;
+    timeInput.appendChild(option);
+  }
+}
+
+async function refreshTimeOptions() {
+  const selectedDoctorId = Number(doctorId.value);
+  if (!Number.isInteger(selectedDoctorId)) {
+    setTimeSelectOptions(defaultTimeOptions);
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/availability?doctorId=${selectedDoctorId}`);
+    if (!response.ok) {
+      setTimeSelectOptions(defaultTimeOptions, timeInput.value);
+      return;
+    }
+    const data = await response.json();
+    const slots = data.slots || [];
+    const selectedDate = dateInput.value;
+    const matchingSlots = selectedDate
+      ? slots.filter((slot) => String(slot.date) === selectedDate)
+      : slots;
+
+    const times = matchingSlots.map((slot) => slot.startTime);
+    setTimeSelectOptions(times.length > 0 ? times : defaultTimeOptions, timeInput.value);
+  } catch (_error) {
+    setTimeSelectOptions(defaultTimeOptions, timeInput.value);
+  }
+}
+
+function toIsoDate(daysAhead) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeDateValue(inputValue) {
+  if (!inputValue) {
+    return "";
+  }
+
+  const value = String(inputValue).trim().toLowerCase();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+  if (value === "today") {
+    return toIsoDate(0);
+  }
+  if (value === "tomorrow") {
+    return toIsoDate(1);
+  }
+  return "";
+}
+
 function clearForm() {
   doctorId.value = "";
   patientName.value = "";
   patientEmail.value = "";
   dateInput.value = "";
-  timeInput.value = "";
+  setTimeSelectOptions(defaultTimeOptions);
   reasonInput.value = "";
   state.voiceConfidence = null;
   transcript.textContent = "No voice command yet.";
@@ -166,7 +252,13 @@ async function parseVoiceTranscript(voiceText) {
   }
 
   if (parsed.doctorId) doctorId.value = String(parsed.doctorId);
-  if (parsed.date) dateInput.value = parsed.date;
+  if (parsed.date) {
+    const normalizedDate = normalizeDateValue(parsed.date);
+    if (normalizedDate) {
+      dateInput.value = normalizedDate;
+    }
+  }
+  await refreshTimeOptions();
   if (parsed.time) timeInput.value = parsed.time;
   if (parsed.reason) reasonInput.value = parsed.reason;
   if (parsed.patientName && !patientName.value) patientName.value = parsed.patientName;
@@ -219,7 +311,10 @@ if (voiceBtn) voiceBtn.addEventListener("click", startVoiceRecognition);
 if (clearBtn) clearBtn.addEventListener("click", clearForm);
 if (reloadDoctors) reloadDoctors.addEventListener("click", loadDoctors);
 if (bookingForm) bookingForm.addEventListener("submit", submitBooking);
+if (doctorId) doctorId.addEventListener("change", refreshTimeOptions);
+if (dateInput) dateInput.addEventListener("change", refreshTimeOptions);
 
 document.addEventListener("DOMContentLoaded", async () => {
+  setTimeSelectOptions(defaultTimeOptions);
   await loadDoctors();
 });

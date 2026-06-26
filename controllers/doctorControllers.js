@@ -108,9 +108,65 @@ function deleteDoctor(db) {
   };
 }
 
+function reactivateDoctor(db) {
+  return (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "Invalid doctor id." });
+    }
+
+    const result = db.prepare("UPDATE doctors SET active = 1 WHERE id = ?").run(id);
+    if (result.changes === 0) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    db.prepare(`
+      INSERT INTO admin_actions (admin_id, action_type, target_record)
+      VALUES (?, 'REACTIVATE_DOCTOR', ?)
+    `).run(req.user.userId, `doctor:${id}`);
+
+    return res.json({ message: "Doctor reactivated successfully." });
+  };
+}
+
+function deleteDoctorPermanently(db) {
+  return (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "Invalid doctor id." });
+    }
+
+    const appointmentCount = db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM appointments
+      WHERE doctor_id = ?
+    `).get(id).count;
+
+    if (appointmentCount > 0) {
+      return res.status(400).json({
+        message: "Doctor cannot be permanently deleted because appointments exist."
+      });
+    }
+
+    const result = db.prepare("DELETE FROM doctors WHERE id = ?").run(id);
+    if (result.changes === 0) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    db.prepare(`
+      INSERT INTO admin_actions (admin_id, action_type, target_record)
+      VALUES (?, 'DELETE_DOCTOR', ?)
+    `).run(req.user.userId, `doctor:${id}`);
+
+    return res.json({ message: "Doctor deleted permanently." });
+  };
+}
+
 module.exports = {
   getAllDoctors,
   createDoctor,
   updateDoctor,
-  deleteDoctor
+  deleteDoctor,
+  reactivateDoctor,
+  deleteDoctorPermanently
 };

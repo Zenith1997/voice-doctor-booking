@@ -8,6 +8,9 @@ const messageBox = document.getElementById("doctorPanelMessage");
 const doctorCreateForm = document.getElementById("doctorCreateForm");
 const slotCreateForm = document.getElementById("slotCreateForm");
 const slotDoctorId = document.getElementById("slotDoctorId");
+const slotDate = document.getElementById("slotDate");
+const slotStart = document.getElementById("slotStart");
+const slotEnd = document.getElementById("slotEnd");
 const doctorRecordsTable = document.getElementById("doctorRecordsTable");
 
 function authHeaders() {
@@ -70,24 +73,62 @@ async function refreshDoctorData() {
   doctorRecordsTable.innerHTML = "";
 
   doctors.forEach((doctor) => {
+    const isActive = Number(doctor.active) === 1;
     const option = document.createElement("option");
     option.value = doctor.id;
     option.textContent = doctor.name;
     slotDoctorId.appendChild(option);
 
     const row = document.createElement("tr");
+    const toggleButtonLabel = isActive ? "Deactivate" : "Reactivate";
+    const toggleButtonClass = isActive ? "btn-outline-warning" : "btn-outline-success";
     row.innerHTML = `
       <td>${doctor.id}</td>
       <td>${doctor.name}</td>
       <td>${doctor.specialty}</td>
       <td>${doctor.location}</td>
-      <td>${doctor.active ? "Active" : "Inactive"}</td>
-      <td><button class="btn btn-sm btn-outline-danger">Deactivate</button></td>
+      <td data-role="status">${isActive ? "Active" : "Inactive"}</td>
+      <td class="d-flex gap-2">
+        <button class="btn btn-sm ${toggleButtonClass}" data-role="toggle">${toggleButtonLabel}</button>
+        <button class="btn btn-sm btn-outline-danger" data-role="delete">Delete</button>
+      </td>
     `;
-    row.querySelector("button").addEventListener("click", async () => {
-      await fetch(`/api/doctors/${doctor.id}`, { method: "DELETE", headers: authHeaders() });
+    row.querySelector('[data-role="toggle"]').addEventListener("click", async () => {
+      const endpoint = isActive
+        ? `/api/doctors/${doctor.id}`
+        : `/api/doctors/${doctor.id}/reactivate`;
+      const method = isActive ? "DELETE" : "PUT";
+
+      const response = await fetch(endpoint, { method, headers: authHeaders() });
+      const data = await response.json();
+      messageBox.textContent = data.message || "Doctor status updated.";
+
+      if (response.ok) {
+        const statusCell = row.querySelector('[data-role="status"]');
+        if (statusCell) {
+          statusCell.textContent = isActive ? "Inactive" : "Active";
+        }
+      }
       await refreshDoctorData();
     });
+
+    row.querySelector('[data-role="delete"]').addEventListener("click", async () => {
+      const confirmed = window.confirm(
+        `Permanently delete ${doctor.name}? This cannot be undone.`
+      );
+      if (!confirmed) {
+        return;
+      }
+
+      const response = await fetch(`/api/doctors/${doctor.id}/permanent`, {
+        method: "DELETE",
+        headers: authHeaders()
+      });
+      const data = await response.json();
+      messageBox.textContent = data.message || "Delete request sent.";
+      await refreshDoctorData();
+    });
+
     doctorRecordsTable.appendChild(row);
   });
 }
@@ -117,11 +158,24 @@ async function createDoctor(event) {
 
 async function createSlot(event) {
   event.preventDefault();
+  const startTime = slotStart.value.trim();
+  const endTime = slotEnd.value.trim();
+
+  if (!startTime || !endTime) {
+    messageBox.textContent = "Please choose both start and end time.";
+    return;
+  }
+
+  if (startTime === endTime) {
+    messageBox.textContent = "End time must be later than start time.";
+    return;
+  }
+
   const payload = {
     doctorId: Number(slotDoctorId.value),
-    date: document.getElementById("slotDate").value.trim(),
-    startTime: document.getElementById("slotStart").value.trim(),
-    endTime: document.getElementById("slotEnd").value.trim()
+    date: slotDate.value.trim(),
+    startTime,
+    endTime
   };
 
   const response = await fetch("/api/availability", {
@@ -141,3 +195,9 @@ if (loginForm) loginForm.addEventListener("submit", login);
 if (logoutBtn) logoutBtn.addEventListener("click", logout);
 if (doctorCreateForm) doctorCreateForm.addEventListener("submit", createDoctor);
 if (slotCreateForm) slotCreateForm.addEventListener("submit", createSlot);
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (slotDate) {
+    slotDate.min = new Date().toISOString().slice(0, 10);
+  }
+});
