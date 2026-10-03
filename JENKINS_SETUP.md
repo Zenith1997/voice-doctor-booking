@@ -2,20 +2,11 @@
 
 This change adds Build, Test, Code Quality, Security, Deploy, Release and Monitoring, plus an initial SCM checkout. It targets a Windows Jenkins agent with Docker Desktop running Linux containers. It is a local assessment deployment, not a public clinical service.
 
-## 1. Put the changes in GitHub
+## 1. Get the pipeline branch
 
-Extract the supplied project ZIP into a new folder. It contains the complete application source without dependencies or secrets. Copy its files over your existing local clone, including hidden `.dockerignore` and `.gitignore`. Keep your existing `.env` locally; never upload it.
+The changes are available in pull request #1 on branch `sit753-jenkins-pipeline`. Review and merge it when ready, or configure Jenkins to use `*/sit753-jenkins-pipeline` while testing. After merging, use `*/main`.
 
-The original repository committed node_modules. Remove these tracked dependency files once (npm ci recreates them):
-
-```powershell
-git rm -r --cached node_modules
-git add .
-git commit -m "Add seven-stage Jenkins pipeline, Docker deployment and API tests"
-git push origin main
-```
-
-Alternatively, use a branch and open a pull request. The ZIP contains all required files, including the updated package-lock.json. Do not upload test-results.xml or a database.
+Previously committed node_modules are removed from this branch. `npm ci` recreates dependencies from the updated package-lock.json. Keep your local `.env` private; no API key is required for CI tests or the basic local deployment.
 
 ## 2. Prepare the Windows Jenkins agent
 

@@ -11,4 +11,4 @@ Dependency fixes update six previously vulnerable transitive packages within exi
 
 Not executed here: Docker build/run, image scan with Trivy, Sonar analysis/gate, Windows PowerShell scripts, Jenkins pipeline, and the live monitor outage/recovery demonstration. These require the configured Windows Jenkins agent. No successful seven-stage run, assessment screenshot, external alert delivery, or production deployment is claimed.
 
-No remote GitHub changes were made: authenticated write access was unavailable.
+Changes were subsequently uploaded through the authenticated GitHub browser to the sit753-jenkins-pipeline branch and proposed in pull request #1. The main branch is unchanged until that pull request is merged.
