@@ -5,13 +5,17 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test --experimental-test-coverage tests/*.test.js",
+    "test:ci": "node --test --experimental-test-coverage --test-reporter=junit --test-reporter-destination=test-results.xml tests/*.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "nodemon": "^3.1.10",
     "openai": "^4.104.0"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

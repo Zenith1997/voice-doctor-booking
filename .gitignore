@@ -1,3 +1,10 @@
 /node_modules
 /.env
 /db/*.db
+/test-results.xml
+/coverage
+/npm-audit.json
+/trivy-image.json
+/monitoring-evidence.log
+/release-image.json
+/revision.txt
