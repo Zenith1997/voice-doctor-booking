@@ -19,23 +19,32 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-const dbDir = path.join(__dirname, "db");
+const dbDir = process.env.DB_DIR || path.join(__dirname, "db");
 
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new DatabaseSync(path.join(dbDir, "app.db"));
+const db = new DatabaseSync(process.env.DB_PATH || path.join(dbDir, "app.db"));
 const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 createTables(db);
 seedDatabase(db);
+
+app.get("/health", (req, res) => {
+  try {
+    db.prepare("SELECT 1").get();
+    res.json({ status: "ok" });
+  } catch {
+    res.status(503).json({ status: "unhealthy" });
+  }
+});
 
 app.use("/api", authRoutes(db));
 app.use("/api", doctorRoutes(db));
@@ -44,6 +53,10 @@ app.use("/api", appointmentRoutes(db));
 app.use("/api", voiceRoutes(db, openai));
 app.use("/api/admin", adminRoutes(db));
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+}
+
+module.exports = { app, db };

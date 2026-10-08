@@ -1,0 +1,11 @@
+node_modules
+.git
+.env
+.env.*
+db
+coverage
+test-results.xml
+*-audit.json
+trivy*.json
+tests
+*.zip
